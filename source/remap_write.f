@@ -111,7 +111,7 @@
 !***********************************************************************
 
       subroutine write_remap(map1_name, map2_name, 
-     &                       interp_file1, interp_file2, output_opt)
+     &            interp_file1, interp_file2, output_opt, ncformat)
 
 !-----------------------------------------------------------------------
 !
@@ -130,7 +130,8 @@
      &            map2_name,    ! name for mapping grid2 to grid1
      &            interp_file1, ! filename for map1 remap data
      &            interp_file2, ! filename for map2 remap data
-     &            output_opt    ! option for output conventions
+     &            output_opt,   ! option for output conventions
+     &            ncformat      ! option for netcdf format
 
 !-----------------------------------------------------------------------
 !
@@ -189,9 +190,9 @@
 
       select case(output_opt)
       case ('scrip')
-        call write_remap_scrip(map1_name, interp_file1, 1)
+        call write_remap_scrip(map1_name, interp_file1, 1, ncformat)
       case ('ncar-csm')
-        call write_remap_csm  (map1_name, interp_file1, 1)
+        call write_remap_csm  (map1_name, interp_file1, 1, ncformat)
       case default
         stop 'unknown output file convention'
       end select
@@ -205,9 +206,9 @@
       if (num_maps > 1) then
         select case(output_opt)
         case ('scrip')
-          call write_remap_scrip(map2_name, interp_file2, 2)
+          call write_remap_scrip(map2_name, interp_file2, 2, ncformat)
         case ('ncar-csm')
-          call write_remap_csm  (map2_name, interp_file2, 2)
+          call write_remap_csm  (map2_name, interp_file2, 2, ncformat)
         case default
           stop 'unknown output file convention'
         end select
@@ -217,9 +218,23 @@
 
       end subroutine write_remap
 
+
 !***********************************************************************
 
-      subroutine write_remap_scrip(map_name, interp_file, direction)
+      subroutine add_compression(fileid, varid, ncformat)
+      integer (kind=int_kind), intent(in)  :: fileid, varid
+      character(char_len), intent(in) :: ncformat
+
+      if (trim(ncformat) .eq. "netcdf4") then
+        ncstat = nf_def_var_deflate (fileid, varid, 1, 1, 6)
+        call netcdf_error_handler(ncstat)
+      endif
+      end subroutine add_compression
+
+!***********************************************************************
+
+      subroutine write_remap_scrip(map_name, interp_file, direction,
+     &                             ncformat)
 
 !-----------------------------------------------------------------------
 !
@@ -236,6 +251,7 @@
       character(char_len), intent(in) ::
      &            map_name     ! name for mapping 
      &,           interp_file  ! filename for remap data
+     &,           ncformat     ! netcdf output data format
 
       integer (kind=int_kind), intent(in) ::
      &  direction              ! direction of map (1=grid1 to grid2
@@ -262,8 +278,13 @@
 !     create netCDF file for mapping and define some global attributes
 !
 !-----------------------------------------------------------------------
-
-      ncstat = nf_create (interp_file, NF_CLOBBER, nc_file_id)
+      select case(ncformat)
+      case ('netcdf3')
+        ncstat = nf_create (interp_file, NF_CLOBBER, nc_file_id)
+      case ('netcdf4')
+        ncstat = nf_create (interp_file, OR(NF_CLOBBER, NF_NETCDF4), 
+     &                      nc_file_id)
+      end select
       call netcdf_error_handler(ncstat)
 
       !***
@@ -413,11 +434,12 @@
       ncstat = nf_def_var (nc_file_id, 'src_grid_dims', NF_INT,
      &                     1, nc_srcgrdrank_id, nc_srcgrddims_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrddims_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'dst_grid_dims', NF_INT,
      &                     1, nc_dstgrdrank_id, nc_dstgrddims_id)
       call netcdf_error_handler(ncstat)
-
+      call add_compression(nc_file_id, nc_dstgrddims_id, ncformat)
 !-----------------------------------------------------------------------
 !
 !     define all arrays for netCDF descriptors
@@ -432,11 +454,13 @@
      &                     NF_DOUBLE, 1, nc_srcgrdsize_id, 
      &                     nc_srcgrdcntrlat_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdcntrlat_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'dst_grid_center_lat', 
      &                     NF_DOUBLE, 1, nc_dstgrdsize_id, 
      &                     nc_dstgrdcntrlat_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdcntrlat_id, ncformat)
 
       !***
       !*** define grid center longitude array
@@ -446,11 +470,13 @@
      &                     NF_DOUBLE, 1, nc_srcgrdsize_id, 
      &                     nc_srcgrdcntrlon_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdcntrlon_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'dst_grid_center_lon', 
      &                     NF_DOUBLE, 1, nc_dstgrdsize_id, 
      &                     nc_dstgrdcntrlon_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdcntrlon_id, ncformat)
 
       !***
       !*** define grid corner lat/lon arrays
@@ -463,11 +489,13 @@
      &                     NF_DOUBLE, 2, nc_dims2_id, 
      &                     nc_srcgrdcrnrlat_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdcrnrlat_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'src_grid_corner_lon', 
      &                     NF_DOUBLE, 2, nc_dims2_id, 
      &                     nc_srcgrdcrnrlon_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdcrnrlon_id, ncformat)
 
       nc_dims2_id(1) = nc_dstgrdcorn_id
       nc_dims2_id(2) = nc_dstgrdsize_id
@@ -476,11 +504,13 @@
      &                     NF_DOUBLE, 2, nc_dims2_id, 
      &                     nc_dstgrdcrnrlat_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdcrnrlat_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'dst_grid_corner_lon', 
      &                     NF_DOUBLE, 2, nc_dims2_id, 
      &                     nc_dstgrdcrnrlon_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdcrnrlon_id, ncformat)
 
       !***
       !*** define units for all coordinate arrays
@@ -554,6 +584,7 @@
      &                     NF_DOUBLE, 1, nc_srcgrdsize_id, 
      &                     nc_srcgrdarea_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdarea_id, ncformat)
 
       ncstat = nf_put_att_text (nc_file_id, nc_srcgrdarea_id, 
      &                          'units', 14, 'square radians')
@@ -563,6 +594,7 @@
      &                     NF_DOUBLE, 1, nc_dstgrdsize_id, 
      &                     nc_dstgrdarea_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdarea_id, ncformat)
 
       ncstat = nf_put_att_text (nc_file_id, nc_dstgrdarea_id, 
      &                          'units', 14, 'square radians')
@@ -576,6 +608,7 @@
      &                     NF_DOUBLE, 1, nc_srcgrdsize_id, 
      &                     nc_srcgrdfrac_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdfrac_id, ncformat)
 
       ncstat = nf_put_att_text (nc_file_id, nc_srcgrdfrac_id, 
      &                          'units', 8, 'unitless')
@@ -585,6 +618,7 @@
      &                     NF_DOUBLE, 1, nc_dstgrdsize_id, 
      &                     nc_dstgrdfrac_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdfrac_id, ncformat)
 
       ncstat = nf_put_att_text (nc_file_id, nc_dstgrdfrac_id, 
      &                          'units', 8, 'unitless')
@@ -598,11 +632,13 @@
      &                     NF_INT, 1, nc_numlinks_id, 
      &                     nc_srcadd_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcadd_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'dst_address', 
      &                     NF_INT, 1, nc_numlinks_id, 
      &                     nc_dstadd_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstadd_id, ncformat)
 
       nc_dims2_id(1) = nc_numwgts_id
       nc_dims2_id(2) = nc_numlinks_id
@@ -611,6 +647,7 @@
      &                     NF_DOUBLE, 2, nc_dims2_id, 
      &                     nc_rmpmatrix_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_rmpmatrix_id, ncformat)
 
       !***
       !*** end definition stage
@@ -823,7 +860,8 @@
 
 !***********************************************************************
 
-      subroutine write_remap_csm(map_name, interp_file, direction)
+      subroutine write_remap_csm(map_name, interp_file, direction, 
+     &                           ncformat)
 
 !-----------------------------------------------------------------------
 !
@@ -840,6 +878,7 @@
       character(char_len), intent(in) ::
      &            map_name     ! name for mapping 
      &,           interp_file  ! filename for remap data
+     &,           ncformat     ! netcdf output file format
 
       integer (kind=int_kind), intent(in) ::
      &  direction              ! direction of map (1=grid1 to grid2
@@ -878,8 +917,13 @@
 !     create netCDF file for mapping and define some global attributes
 !
 !-----------------------------------------------------------------------
-
-      ncstat = nf_create (interp_file, NF_CLOBBER, nc_file_id)
+      select case(ncformat)
+      case('netcdf3')
+        ncstat = nf_create (interp_file, NF_CLOBBER, nc_file_id)
+      case('netcdf4')
+        ncstat = nf_create (interp_file, OR(NF_CLOBBER, NF_NETCDF4), 
+     &                      nc_file_id)
+      end select
       call netcdf_error_handler(ncstat)
 
       !***
@@ -1074,10 +1118,12 @@
       ncstat = nf_def_var (nc_file_id, 'src_grid_dims', NF_INT,
      &                     1, nc_srcgrdrank_id, nc_srcgrddims_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrddims_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'dst_grid_dims', NF_INT,
      &                     1, nc_dstgrdrank_id, nc_dstgrddims_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrddims_id, ncformat)
 
 !-----------------------------------------------------------------------
 !
@@ -1093,11 +1139,13 @@
      &                     NF_DOUBLE, 1, nc_srcgrdsize_id, 
      &                     nc_srcgrdcntrlat_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdcntrlat_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'yc_b', 
      &                     NF_DOUBLE, 1, nc_dstgrdsize_id, 
      &                     nc_dstgrdcntrlat_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdcntrlat_id, ncformat)
 
       !***
       !*** define grid center longitude array
@@ -1107,11 +1155,13 @@
      &                     NF_DOUBLE, 1, nc_srcgrdsize_id, 
      &                     nc_srcgrdcntrlon_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdcntrlon_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'xc_b', 
      &                     NF_DOUBLE, 1, nc_dstgrdsize_id, 
      &                     nc_dstgrdcntrlon_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdcntrlon_id, ncformat)
 
       !***
       !*** define grid corner lat/lon arrays
@@ -1124,11 +1174,13 @@
      &                     NF_DOUBLE, 2, nc_dims2_id, 
      &                     nc_srcgrdcrnrlat_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdcrnrlat_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'xv_a', 
      &                     NF_DOUBLE, 2, nc_dims2_id, 
      &                     nc_srcgrdcrnrlon_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdcrnrlon_id, ncformat)
 
       nc_dims2_id(1) = nc_dstgrdcorn_id
       nc_dims2_id(2) = nc_dstgrdsize_id
@@ -1137,11 +1189,13 @@
      &                     NF_DOUBLE, 2, nc_dims2_id, 
      &                     nc_dstgrdcrnrlat_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdcrnrlat_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'xv_b', 
      &                     NF_DOUBLE, 2, nc_dims2_id, 
      &                     nc_dstgrdcrnrlon_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdcrnrlon_id, ncformat)
 
       !***
       !*** CSM wants all in degrees
@@ -1197,6 +1251,7 @@
       ncstat = nf_def_var (nc_file_id, 'mask_a', NF_INT,
      &                     1, nc_srcgrdsize_id, nc_srcgrdimask_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdimask_id, ncformat)
 
       ncstat = nf_put_att_text (nc_file_id, nc_srcgrdimask_id, 
      &                          'units', 8, 'unitless')
@@ -1205,6 +1260,7 @@
       ncstat = nf_def_var (nc_file_id, 'mask_b', NF_INT,
      &                     1, nc_dstgrdsize_id, nc_dstgrdimask_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdimask_id, ncformat)
 
       ncstat = nf_put_att_text (nc_file_id, nc_dstgrdimask_id, 
      &                          'units', 8, 'unitless')
@@ -1218,6 +1274,7 @@
      &                     NF_DOUBLE, 1, nc_srcgrdsize_id, 
      &                     nc_srcgrdarea_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdarea_id, ncformat)
 
       ncstat = nf_put_att_text (nc_file_id, nc_srcgrdarea_id, 
      &                          'units', 14, 'square radians')
@@ -1227,6 +1284,7 @@
      &                     NF_DOUBLE, 1, nc_dstgrdsize_id, 
      &                     nc_dstgrdarea_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdarea_id, ncformat)
 
       ncstat = nf_put_att_text (nc_file_id, nc_dstgrdarea_id, 
      &                          'units', 14, 'square radians')
@@ -1240,6 +1298,7 @@
      &                     NF_DOUBLE, 1, nc_srcgrdsize_id, 
      &                     nc_srcgrdfrac_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcgrdfrac_id, ncformat)
 
       ncstat = nf_put_att_text (nc_file_id, nc_srcgrdfrac_id, 
      &                          'units', 8, 'unitless')
@@ -1249,6 +1308,7 @@
      &                     NF_DOUBLE, 1, nc_dstgrdsize_id, 
      &                     nc_dstgrdfrac_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstgrdfrac_id, ncformat)
 
       ncstat = nf_put_att_text (nc_file_id, nc_dstgrdfrac_id, 
      &                          'units', 8, 'unitless')
@@ -1262,16 +1322,19 @@
      &                     NF_INT, 1, nc_numlinks_id, 
      &                     nc_srcadd_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_srcadd_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'row', 
      &                     NF_INT, 1, nc_numlinks_id, 
      &                     nc_dstadd_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_dstadd_id, ncformat)
 
       ncstat = nf_def_var (nc_file_id, 'S', 
      &                     NF_DOUBLE, 1, nc_numlinks_id, 
      &                     nc_rmpmatrix_id)
       call netcdf_error_handler(ncstat)
+      call add_compression(nc_file_id, nc_rmpmatrix_id, ncformat)
 
       if (num_wts > 1) then
         nc_dims2_id(1) = nc_numwgts1_id
@@ -1281,6 +1344,7 @@
      &                     NF_DOUBLE, 2, nc_dims2_id, 
      &                     nc_rmpmatrix2_id)
         call netcdf_error_handler(ncstat)
+        call add_compression(nc_file_id, nc_rmpmatrix2_id, ncformat)
       endif
 
       !***

@@ -8,7 +8,8 @@ def compute_remap_weights(grid1_file, grid2_file, interp_file1, interp_file2, \
        luse_grid1_area='.false.', luse_grid2_area='.false.', \
        normalize_opt='fracarea', output_opt='scrip', \
        restrict_type='latitude', num_srch_bins='90', \
-       grid1_periodic='.false.', grid2_periodic='.false.'):
+       grid1_periodic='.false.', grid2_periodic='.false.',
+       ncformat='netcdf4'):
     '''
     compute remap weights and addresses
     '''
@@ -34,6 +35,7 @@ def compute_remap_weights(grid1_file, grid2_file, interp_file1, interp_file2, \
     f.write('    luse_grid2_area = ' + str(luse_grid2_area) + '\n')
     f.write('    grid1_periodic = ' + str(grid1_periodic) + '\n')
     f.write('    grid2_periodic = ' + str(grid2_periodic) + '\n')
+    f.write('    ncformat       = \'' + str(ncformat) + '\'\n')
     f.write('/\n')
 
     f.close()

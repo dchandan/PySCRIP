@@ -65,7 +65,8 @@
      &           map2_name,    ! name for mapping from grid2 to grid1
      &           map_method,   ! choice for mapping method
      &           normalize_opt,! option for normalizing weights
-     &           output_opt    ! option for output conventions
+     &           output_opt,   ! option for output conventions
+     &           ncformat      ! option for the netcdf output format type
 
       integer (kind=int_kind) ::
      &           nmap          ! number of mappings to compute (1 or 2)
@@ -76,7 +77,7 @@
      &                        luse_grid1_area, luse_grid2_area,
      &                        map_method, normalize_opt, output_opt,
      &                        restrict_type, num_srch_bins,
-     &                        grid1_periodic, grid2_periodic
+     &                        grid1_periodic, grid2_periodic, ncformat
 
 !-----------------------------------------------------------------------
 !
@@ -122,6 +123,7 @@
       output_opt    = 'scrip'
       restrict_type = 'latitude'
       num_srch_bins = 900
+      ncformat      = "netcdf4"
 
       call get_unit(iunit)
       open(iunit, file='scrip_in', status='old', form='formatted')
@@ -163,10 +165,10 @@
 !-----------------------------------------------------------------------
 
       call grid_init(grid1_file, grid2_file)
-
-      write(stdout, *) ' Computing remappings between: ',grid1_name
-      write(stdout, *) '                          and  ',grid2_name
-
+      write(stdout, *) ' Computing remappings between: ', 
+     &                   trim(grid1_name)
+      write(stdout, *) '                          and  ', 
+     &                   trim(grid2_name)
 !-----------------------------------------------------------------------
 !
 !     initialize some remapping variables.
@@ -210,7 +212,7 @@
       endif
 
       call write_remap(map1_name, map2_name, 
-     &                 interp_file1, interp_file2, output_opt)
+     &                 interp_file1, interp_file2, output_opt, ncformat)
 
 !-----------------------------------------------------------------------
 
