@@ -15,20 +15,21 @@ a = PySCRIPConfig()
 #         print a.mapfile(map_["from"], map_["to"], maptype=maptype)
 #         # print map_
 
+case = "cesmpifv1mts"
+maptype = "bilinear"
 g1  = "gx1"
-g2  = "ll1"
-maptype = "conservative"
-# scrip.compute_remap_weights("/Users/dchandan/Development/PySCRIP/test/ptest_gx1.nc",
-#                             "/Users/dchandan/Development/PySCRIP/grids/ll1deg_grid.nc",
-#                             a.mapfile(g1, g2),
-#                             a.mapfile(g2, g1),
-#                             a.mapname(g1, g2),
-#                             a.mapname(g2, g1),
-#                             2,
-#                             maptype,
-#                             normalize_opt="destarea",
-#                             luse_grid1_area='.false.', luse_grid2_area='.false.',)
+g2  = "fv1"
+scrip.compute_remap_weights("/Users/dchandan/Research/CESM/bc/cesmpifv1mts/cpl_s2/wrkdir/cesmpifv1mts_gx1.nc",
+                            "/Users/dchandan/Desktop/ptest/cpl_s2/grids/fv0.9x1.25_070727.nc",
+                            a.mapFile(case, maptype, g1, g2),
+                            a.mapFile(case, maptype, g2, g1),
+                            a.mapName(case, maptype, g1, g2),
+                            a.mapName(case, maptype, g2, g1),
+                            2,
+                            maptype,
+                            normalize_opt="fracarea")
 
 
 # Testing part
-scrip.test_remap_weights(2, a.mapfile(g1, g2), "out.nc")
+scrip.test_remap_weights(2, a.mapFile(case, maptype, g1, g2), "out1.nc")
+scrip.test_remap_weights(2, a.mapFile(case, maptype, g2, g1), "out2.nc")
