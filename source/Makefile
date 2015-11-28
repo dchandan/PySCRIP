@@ -9,7 +9,7 @@
 # SVN $URL$
 #===============================================================================
 
-NC_CONFIG = /Users/dchandan/local/gcc/netcdf/430_hdf5_serial_gcc48/bin/nc-config
+NC_CONFIG = $(HOME)/local/gcc/netcdf/430_hdf5_serial_gcc48/bin/nc-config
 LIBDIR    = $(shell $(NC_CONFIG) --prefix)/lib
 INCDIR    = $(shell $(NC_CONFIG) --prefix)/include
 SRCDIR    = .
@@ -17,13 +17,13 @@ PREFIX    = /usr/local
 
 LIBNAME   = _scrip
 COMPILE   = gfortran
-FLAGS     = -g -fdefault-real-8 -ffixed-form -O2 -fPIC
+FLAGS     = -fdefault-real-8 -ffixed-form -O2 -fPIC
 LIB       =  $(shell $(NC_CONFIG) --flibs)
 INCLUDE   = -I$(INCDIR)
 F2PY      = f2py
-F2PY_LIB  = -L${LIBDIR} -L/Users/dchandan/local/gcc/HDF5/1811_v18-serial-gcc48/lib -lnetcdf -lnetcdff -lhdf5 -lhdf5_hl
+F2PY_LIB  = -L${LIBDIR} -L$(HDF5SERIAL_LIB_DIR_GCC) -lnetcdf -lnetcdff -lhdf5 -lhdf5_hl
 F2PY_INCLUDE  = -I${INCDIR}
-F2PY_F90_FLAG = '-g -fdefault-real-8 -ffixed-form -O2 -fPIC'
+F2PY_F90_FLAG = '-fdefault-real-8 -ffixed-form -O2 -fPIC'
 
 OBJF2PY  = \
 	kinds_mod.o \

@@ -15,3 +15,10 @@
       convert_old.f  - converts old grid files from a previous
                        version of the SCRIP routines
 
+      myconvertPOPT.f- A variant on convertPOPT which is used to
+                       generate the POP grid for the CESM model. I
+                       (Deepak) do not know who wrote the code or
+                       why a variant was necessary. This version
+                       just happens to exist in one of my SCRIP
+                       source codes, and I am adding it here to the
+                       PySCRIP source code. 

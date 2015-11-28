@@ -9,11 +9,7 @@ LIB  = -L$(NETCDF_LIB_DIR_ICC) -lnetcdff -lnetcdf
 INCL = -I$(NETCDF_INC_DIR_ICC)
 SRCDIR  = ../source
 EXEDIR  = .
-OBJ  = \
-	kinds_mod.o \
-	constants.o \
-	iounits.o \
-	netcdf.o
+OBJ  = kinds_mod.o constants.o iounits.o netcdf.o
 
 all: convertPOPT convertgauss create_latlon
 
@@ -28,6 +24,9 @@ convertgauss: $(OBJ) convertgauss.o
 
 create_latlon: $(OBJ) create_latlon.o
 	$(COMP) $(FLAGS) $(OBJ) create_latlon.o $(LIB) -o $(EXEDIR)/create_latlon
+
+myconvertPOPT: $(OBJ) myconvertPOPT.o
+	$(COMP) $(FLAGS) $(OBJ) myconvertPOPT.o $(LIB) -o $(EXEDIR)/myconvertPOPT
 
 kinds_mod.o: $(SRCDIR)/kinds_mod.f
 	$(COMP) $(FLAGS) -c $(SRCDIR)/kinds_mod.f
@@ -53,6 +52,12 @@ convertgauss.o: convertgauss.f kinds_mod.o constants.o iounits.o netcdf.o
 create_latlon.o: create_latlon.f kinds_mod.o constants.o iounits.o netcdf.o
 	$(COMP) $(FLAGS) -c create_latlon.f
 
+myconvertPOPT.o: myconvertPOPT.f kinds_mod.o constants.o iounits.o netcdf.o
+	$(COMP) $(FLAGS) -c myconvertPOPT.f
+
+tidy:
+	/bin/rm -f *.o *.mod
+
 clean: 
-	/bin/rm *.o *.mod
+	/bin/rm -f *.o *.mod convertPOPT convertgauss create_latlon
 
