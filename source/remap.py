@@ -3,7 +3,7 @@ import netCDF4 as netCDF
 import _scrip
 
 
-def remap(src_array, remap_file, src_grad1=None, src_grad2=None, \
+def remap(src_array, remap_file, fformat='scrip', src_grad1=None, src_grad2=None, \
              src_grad3=None, spval=1e37, verbose=False):
     '''
     This is a wrapper around the remap FORTRAN routine in the _scrip.so shared 
@@ -23,26 +23,49 @@ def remap(src_array, remap_file, src_grad1=None, src_grad2=None, \
         remapped data.
     '''
 
+    if fformat not in ["scrip", "ncar-csm"]:
+        raise ValueError("fformat argument must be 'scrip' or 'ncar-csm'")
+
     # get info from remap_file
     data = netCDF.Dataset(remap_file, 'r')
     title = data.title
     map_method = data.map_method
     normalization = data.normalization
-    src_grid_name = data.source_grid
-    dst_grid_name = data.dest_grid
-    src_grid_size = len(data.dimensions['src_grid_size'])
-    dst_grid_size = len(data.dimensions['dst_grid_size'])
-    num_links = len(data.dimensions['num_links'])
-    src_grid_dims = data.variables['src_grid_dims'][:]
-    dst_grid_dims = data.variables['dst_grid_dims'][:]
+    if fformat is "scrip":
+        src_grid_name = data.source_grid
+        dst_grid_name = data.dest_grid
+        src_grid_size = len(data.dimensions['src_grid_size'])
+        dst_grid_size = len(data.dimensions['dst_grid_size'])
+        num_links     = len(data.dimensions['num_links'])
+        src_grid_dims = data.variables['src_grid_dims'][:]
+        dst_grid_dims = data.variables['dst_grid_dims'][:]
+        
+        # get weights and addresses from remap_file
+        map_wts = data.variables['remap_matrix'][:]
+        dst_add = data.variables['dst_address'][:]
+        src_add = data.variables['src_address'][:]
 
-    # get weights and addresses from remap_file
-    map_wts = data.variables['remap_matrix'][:]
-    dst_add = data.variables['dst_address'][:]
-    src_add = data.variables['src_address'][:]
+        # get destination mask
+        dst_mask = data.variables['dst_grid_imask'][:]
 
-    # get destination mask
-    dst_mask = data.variables['dst_grid_imask'][:]
+    else:
+        src_grid_name = data.domain_a
+        dst_grid_name = data.domain_b
+        src_grid_size = len(data.dimensions['n_a'])
+        dst_grid_size = len(data.dimensions['n_b'])
+        num_links     = len(data.dimensions['n_s'])
+        src_grid_dims = data.variables['src_grid_dims'][:]
+        dst_grid_dims = data.variables['dst_grid_dims'][:]
+
+        # get weights and addresses from remap_file
+        map_wts1 = data.variables['S'][:]
+        map_wts2 = data.variables['S2'][:]
+        dst_add  = data.variables['row'][:]
+        src_add  = data.variables['col'][:]
+        # get destination mask
+        dst_mask = data.variables['mask_b'][:]
+
+
 
     # remap from src grid to dst grid
     if src_grad1 is not None:
@@ -53,6 +76,7 @@ def remap(src_array, remap_file, src_grad1=None, src_grad2=None, \
     if verbose is True:
         print 'Reading remapping: ', title
         print 'From file: ', remap_file
+        print 'File format: ', fformat
         print ' '
         print 'Remapping between:'
         print src_grid_name
@@ -70,7 +94,11 @@ def remap(src_array, remap_file, src_grad1=None, src_grad2=None, \
             # first order remapping
             # insure that map_wts is a (num_links,4) array
             tmp_map_wts = np.zeros((num_links,4))
-            tmp_map_wts[:,0] = map_wts[:,0].copy()
+            if fformat is "scrip":
+                tmp_map_wts[:,0]   = map_wts[:,0].copy()
+            else:
+                tmp_map_wts[:,0]   = map_wts1.copy()
+                tmp_map_wts[:,1:3] = map_wts2.copy()                
             map_wts = tmp_map_wts
             _scrip.remap(tmp_dst_array, map_wts, \
                                          dst_add, src_add, tmp_src_array)
@@ -122,7 +150,12 @@ def remap(src_array, remap_file, src_grad1=None, src_grad2=None, \
                 # first order remapping
                 # insure that map_wts is a (num_links,4) array
                 tmp_map_wts = np.zeros((num_links,4))
-                tmp_map_wts[:,0] = map_wts[:,0].copy()
+                if fformat is "scrip":
+                    tmp_map_wts[:,0]   = map_wts[:,0].copy()
+                else:
+                    tmp_map_wts[:,0]   = map_wts1.copy()
+                    tmp_map_wts[:,1:3] = map_wts2.copy()                
+
                 map_wts = tmp_map_wts
                 _scrip.remap(tmp_dst_array, map_wts, \
                                              dst_add, src_add, tmp_src_array)
