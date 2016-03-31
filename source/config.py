@@ -8,6 +8,7 @@ data stored as a YAML file in the user's home directory.
 import os.path as osp
 import yaml
 
+
 class YAMLobj(dict):
     """
     Maps a YAML parsed nested dictionary to python attributes.
@@ -15,6 +16,7 @@ class YAMLobj(dict):
 
     We need this class to derive the PySCRIPConfig class below. 
     """
+
     def __init__(self, args):
         super(YAMLobj, self).__init__(args)
         if isinstance(args, dict):
@@ -23,7 +25,6 @@ class YAMLobj(dict):
                     self[k] = v
                 else:
                     self.__setattr__(k, YAMLobj(v))
-
 
     def __getattr__(self, attr):
         return self.get(attr)
@@ -47,9 +48,9 @@ class SCRIPConfigError(Exception):
     pass
 
 
-
 class PySCRIPConfig(YAMLobj):
     defaultconfigfile = osp.join(osp.expanduser("~"), ".pyscrip.yaml")
+
     def __init__(self, configfile=None):
         """
         ARGUMENTS
@@ -63,11 +64,10 @@ class PySCRIPConfig(YAMLobj):
                 raise RuntimeError("No config file given and no default file for PySCRIPConfig object")
         else:
             ff = open(configfile, 'r')
-        
-        super(PySCRIPConfig, self).__init__( yaml.load(ff, Loader=yaml.Loader) )
+
+        super(PySCRIPConfig, self).__init__(yaml.load(ff, Loader=yaml.Loader))
         ff.close()
 
-    
     def _mapsListForCaseAndType(self, case, maptype):
         """
         ARGUMENTS
@@ -81,7 +81,6 @@ class PySCRIPConfig(YAMLobj):
             if maptype in self.mapsAvailable(case):
                 return getattr(getattr(self.map, case), maptype)
         raise SCRIPConfigError("No map information found in PySCRIP config file")
-
 
     def mapFile(self, case, maptype, gfrom, gto):
         """
@@ -97,7 +96,6 @@ class PySCRIPConfig(YAMLobj):
             if (mapconf["from"] == gfrom) and (mapconf["to"] == gto):
                 return osp.join(self.datadir[0], mapconf["fname"])
         raise SCRIPConfigError("No map information found in PySCRIP config file")
-
 
     def mapName(self, case, maptype, gfrom, gto):
         """
@@ -116,7 +114,6 @@ class PySCRIPConfig(YAMLobj):
                 return mapconf["name"]
         raise SCRIPConfigError("No map information found in PySCRIP config file")
 
-
     def mapsAvailable(self, case):
         """
         ARGUMENTS
@@ -129,7 +126,6 @@ class PySCRIPConfig(YAMLobj):
             raise SCRIPConfigError("No information for requested 'case' in PySCRIP config file")
         else:
             return val.keys()
-
 
     def casesAvailable(self):
         """
