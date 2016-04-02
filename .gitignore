@@ -5,3 +5,4 @@ create_latlon
 build
 PySCRIP.egg-info
 PySCRIP/_scrip.so.dSYM
+PySCRIP/_scrip.cpython-35m-darwin.so.dSYM

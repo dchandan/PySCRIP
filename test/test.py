@@ -1,4 +1,4 @@
-
+from __future__ import print_function
 import sys, os
 import PySCRIP as scrip
 from PySCRIP.config import PySCRIPConfig
@@ -13,13 +13,13 @@ a = PySCRIPConfig()
 # Mapping part
 ncfile = Dataset("testdata/cesmpifv1mts_cam_mapping_testdata.nc", "r")
 src_array = ncfile.variables["TS"][:,:]
-print src_array.shape
+print(src_array.shape)
 dest = scrip.remap(src_array, "/Users/dchandan/Research/CESM/bc/cesmpifv1mts/cpl_s2/wrkdir/map_fv1-gx1_a_cesmpifv1_130513.nc",
                    fformat="ncar-csm")
-print dest.shape
+print(dest.shape)
 
-print src_array.min(), src_array.max()
-print dest.min(), dest.max()
+print(src_array.min(), src_array.max())
+print(dest.min(), dest.max())
 
 plt.figure()
 plt.imshow(np.flipud(src_array[0,:]))

@@ -1,5 +1,4 @@
 
-import sys, os
 import PySCRIP as scrip
 from PySCRIP.config import PySCRIPConfig
 from netCDF4 import Dataset
@@ -13,12 +12,12 @@ a = PySCRIPConfig()
 # Mapping part
 ncfile = Dataset("testdata/cesmpifv1mts_pop_mapping_testdata.nc", "r")
 src_array = ncfile.variables["SSH"][:,:]
-print src_array.shape
+print(src_array.shape)
 dest = scrip.remap(src_array, a.mapFile("cesmpifv1mts", "conservative", "gx1", "fv1"))
-print dest.shape
+print(dest.shape)
 
-print src_array.min(), src_array.max()
-print dest.min(), dest.max()
+print(src_array.min(), src_array.max())
+print(dest.min(), dest.max())
 
 plt.figure()
 plt.imshow(np.flipud(src_array[0,:]))

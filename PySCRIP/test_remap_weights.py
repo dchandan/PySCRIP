@@ -1,16 +1,17 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import tempfile
-import _scrip
+from . import _scrip
 
 
-def test_remap_weights(field_choice, interp_file, output_file): 
-    '''
+def test_remap_weights(field_choice, interp_file, output_file):
+    """
     test addresses and weights computed in a setup phase
-    '''
+    """
 
     # write test namelist file
     nmlfile = os.path.join(tempfile.gettempdir(), 'test_remap_weights_in')
-    f = open(nmlfile,'w')
+    f = open(nmlfile, 'w')
 
     f.write('&remap_inputs' + '\n')
     f.write('    field_choice = ' + str(field_choice) + '\n')
@@ -24,4 +25,4 @@ def test_remap_weights(field_choice, interp_file, output_file):
     _scrip.test_remap_weights(nmlfile)
 
     # clean
-    os.remove(nmlfile) 
+    os.remove(nmlfile)

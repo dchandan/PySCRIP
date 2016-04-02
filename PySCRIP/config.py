@@ -4,7 +4,7 @@ configured on this system. To do this the class relies on configuration
 data stored as a YAML file in the user's home directory.
 
 """
-
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os.path as osp
 import yaml
 
@@ -14,13 +14,13 @@ class YAMLobj(dict):
     Maps a YAML parsed nested dictionary to python attributes.
     This solution is a variation on http://stackoverflow.com/a/32107024/805357
 
-    We need this class to derive the PySCRIPConfig class below. 
+    We need this class to derive the PySCRIPConfig class below.
     """
 
     def __init__(self, args):
         super(YAMLobj, self).__init__(args)
         if isinstance(args, dict):
-            for k, v in args.iteritems():
+            for (k, v) in list(args.items()):
                 if not isinstance(v, dict):
                     self[k] = v
                 else:
@@ -71,10 +71,10 @@ class PySCRIPConfig(YAMLobj):
     def _mapsListForCaseAndType(self, case, maptype):
         """
         ARGUMENTS
-            case    - name of the case  
+            case    - name of the case
             maptype - name of the map type (e.g. conservative)
         RETURNS
-            list of maps (a map is information about going from grid A to grid B) 
+            list of maps (a map is information about going from grid A to grid B)
             configured for the specific case and the specific type
         """
         if case in self.casesAvailable():
@@ -85,7 +85,7 @@ class PySCRIPConfig(YAMLobj):
     def mapFile(self, case, maptype, gfrom, gto):
         """
         ARGUMENTS
-            case    - name of the case  
+            case    - name of the case
             maptype - name of the map type (e.g. conservative)
             gfrom   - grid from which to map
             gto     - the grid to which to map
@@ -102,7 +102,7 @@ class PySCRIPConfig(YAMLobj):
         Constructs and returns the name of the SCRIP netcdf mapping file corresponding
         to the map type "maptype" from grid "grom" to grid "gto".
         ARGUMENTS
-            case    - name of the case  
+            case    - name of the case
             maptype - name of the map type (e.g. conservative)
             gfrom   - grid from which to map
             gto     - the grid to which to map
@@ -125,11 +125,11 @@ class PySCRIPConfig(YAMLobj):
         if val is None:
             raise SCRIPConfigError("No information for requested 'case' in PySCRIP config file")
         else:
-            return val.keys()
+            return list(val.keys())
 
     def casesAvailable(self):
         """
         RETURNS
             list of the cases currently available in the configuration file
         """
-        return self.map.keys()
+        return list(self.map.keys())

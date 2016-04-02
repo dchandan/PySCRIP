@@ -1,15 +1,16 @@
+from __future__ import absolute_import
 import os
 import tempfile
-import _scrip
+from . import _scrip
 
 
-def compute_remap_weights(grid1_file, grid2_file, interp_file1, interp_file2, \
-       map1_name, map2_name, num_maps, map_method, \
-       luse_grid1_area='.false.', luse_grid2_area='.false.', \
-       normalize_opt='fracarea', output_opt='scrip', \
-       restrict_type='latitude', num_srch_bins='90', \
-       grid1_periodic='.false.', grid2_periodic='.false.',
-       ncformat='netcdf4'):
+def compute_remap_weights(grid1_file, grid2_file, interp_file1, interp_file2,
+                          map1_name, map2_name, num_maps, map_method,
+                          luse_grid1_area='.false.', luse_grid2_area='.false.',
+                          normalize_opt='fracarea', output_opt='scrip',
+                          restrict_type='latitude', num_srch_bins='90',
+                          grid1_periodic='.false.', grid2_periodic='.false.',
+                          ncformat='netcdf4'):
     '''
     compute remap weights and addresses
     '''
@@ -44,4 +45,4 @@ def compute_remap_weights(grid1_file, grid2_file, interp_file1, interp_file2, \
     _scrip.compute_remap_weights(nmlfile)
 
     # clean
-    os.remove(nmlfile) 
+    os.remove(nmlfile)
