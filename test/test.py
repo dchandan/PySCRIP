@@ -1,7 +1,7 @@
 
 import sys, os
-import PySCRIP.source as scrip
-from PySCRIP.source.config import PySCRIPConfig
+import PySCRIP.PySCRIP as scrip
+from PySCRIP.PySCRIP.config import PySCRIPConfig
 from netCDF4 import Dataset
 import numpy as np
 from matplotlib import pylab as plt
