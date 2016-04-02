@@ -1,0 +1,1 @@
+dict(real=dict(dbl_kind="double"), integer=dict(int_kind="int"))

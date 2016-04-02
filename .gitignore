@@ -3,5 +3,3 @@ convertgauss
 convertPOPT
 create_latlon
 source/_scrip.so.dSYM
-.f2py_f2cmap
-.log.dti
