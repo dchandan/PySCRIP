@@ -13,7 +13,7 @@ NC_CONFIG = $(HOME)/local/gcc/netcdf/430_hdf5_serial_gcc48/bin/nc-config
 LIBDIR    = $(shell $(NC_CONFIG) --prefix)/lib
 INCDIR    = $(shell $(NC_CONFIG) --prefix)/include
 SRCDIR    = $(shell pwd)
-BUILDIR   = /Users/dchandan/Development/PySCRIP/build/test
+# BUILDIR   = /Users/dchandan/Development/PySCRIP/build/test
 PREFIX    = /usr/local
 
 LIBNAME   = _scrip
@@ -21,7 +21,7 @@ COMPILE   = gfortran
 FLAGS     = -fdefault-real-8 -ffixed-form -O2 -fPIC
 LIB       =  $(shell $(NC_CONFIG) --flibs)
 INCLUDE   = -I$(INCDIR) -J$(BUILDIR)
-F2PY      = f2py
+# F2PY      = f2py
 F2PY_LIB  = -L${LIBDIR} -L$(HDF5SERIAL_LIB_DIR_GCC) -lnetcdf -lnetcdff -lhdf5 -lhdf5_hl
 F2PY_INCLUDE  = -I${INCDIR} -I$(BUILDIR)
 F2PY_F90_FLAG = '-fdefault-real-8 -ffixed-form -O2 -fPIC'
@@ -48,7 +48,7 @@ all: f2py
 f2py: $(SRCDIR)/$(LIBNAME)
 
 $(SRCDIR)/$(LIBNAME): $(SRCDIR)/pyscrip.f90 $(OBJF2PY)
-	cd $(BUILDIR) && $(F2PY) --f90flags=$(F2PY_F90_FLAG) \
+	$(F2PY) --f90flags=$(F2PY_F90_FLAG) \
 	$(F2PY_LIB) $(F2PY_INCLUDE) -m $(LIBNAME) \
 	-c $(OBJF2PY) $(SRCDIR)/pyscrip.f90
 

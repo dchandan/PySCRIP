@@ -2,4 +2,6 @@ SCRIPusers.ps
 convertgauss
 convertPOPT
 create_latlon
-source/_scrip.so.dSYM
+build
+PySCRIP.egg-info
+PySCRIP/_scrip.so.dSYM
