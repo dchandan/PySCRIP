@@ -1,7 +1,6 @@
-
 import sys, os
-import PySCRIP.source as scrip
-from PySCRIP.source.config import PySCRIPConfig
+import PySCRIP as scrip
+from PySCRIP.config import PySCRIPConfig
 from netCDF4 import Dataset
 import numpy as np
 from matplotlib import pylab as plt
@@ -15,16 +14,18 @@ a = PySCRIPConfig()
 #         print a.mapfile(map_["from"], map_["to"], maptype=maptype)
 #         # print map_
 
-case = "cesmpifv1mts"
-maptype = "bilinear"
-g1  = "gx1"
-g2  = "fv1"
-scrip.compute_remap_weights("/Users/dchandan/Research/CESM/bc/cesmpifv1mts/cpl_s2/wrkdir/cesmpifv1mts_gx1.nc",
-                            "/Users/dchandan/Desktop/ptest/cpl_s2/grids/fv0.9x1.25_070727.nc",
-                            a.mapFile(case, maptype, g1, g2),
-                            a.mapFile(case, maptype, g2, g1),
-                            a.mapName(case, maptype, g1, g2),
-                            a.mapName(case, maptype, g2, g1),
+case = "PlioMIP_Eoi400_v2"
+maptype = "conservative"
+g1  = "fv1"
+g2  = "ll1"
+
+
+scrip.compute_remap_weights("/Users/dchandan/Research/PlioTopo/gencesmbc/prism4_v2/cpl_s2/grids/fv0.9x1.25_070727.nc",
+                            "/Users/dchandan/Development/PySCRIP/grids/ll1deg_grid.nc",
+                            a.getmap(case, maptype, g1, g2).fname,
+                            a.getmap(case, maptype, g2, g1).fname,
+                            a.getmap(case, maptype, g1, g2).name,
+                            a.getmap(case, maptype, g2, g1).name,
                             2,
                             maptype,
                             normalize_opt="fracarea")

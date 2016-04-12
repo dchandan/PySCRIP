@@ -4,7 +4,7 @@ import netCDF4 as netCDF
 from . import _scrip
 
 
-def remap(src_array, remap_file, fformat='scrip', src_grad1=None, src_grad3=None,
+def remap(src_array, remap_file, fformat, src_grad1=None, src_grad3=None,
           src_grad2=None, spval=1e37, verbose=False):
     """
     This is a wrapper around the remap FORTRAN routine in the _scrip.so shared

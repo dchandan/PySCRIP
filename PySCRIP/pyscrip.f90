@@ -96,7 +96,7 @@
 !
 !-----------------------------------------------------------------------
 
-      character (80) :: namelist_file
+      character (256) :: namelist_file
 
       integer (kind=int_kind) :: n,     ! dummy counter
      &                           iunit  ! unit number for namelist file
@@ -325,7 +325,7 @@
 !
 !-----------------------------------------------------------------------
 
-      character (80) :: namelist_file
+      character (256) :: namelist_file
 
       character (char_len) :: 
      &        map_name      ! name for mapping from grid1 to grid2

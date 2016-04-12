@@ -1,18 +1,24 @@
 #!/usr/bin/env python
 
-from setuptools.command.install import install
-from distutils.command.build import build
+from setuptools.command.install import install as setuptoolsinstall
+from distutils.command.build import build as distbuild
 
-from distutils.command.clean import clean
+from distutils.command.clean import clean as distclean
 
-import os, errno, sys
+import os
+import errno
+import sys
 from subprocess import call
 
 # https://github.com/Turbo87/py-xcsoar/blob/master/setup.py
 
-class PySCRIP_Build(build):
-    def run(self):
 
+class PySCRIP_Build(distbuild):
+    """
+    A class that
+
+    """
+    def run(self):
         if sys.version_info >= (3, 0):
             F2PY = "/Users/dchandan/local/anaconda/bin/f2py3"
         else:
@@ -22,7 +28,7 @@ class PySCRIP_Build(build):
         # os.makedirs(build_path)
         try:
             os.makedirs(build_path)
-        except OSError as exc: 
+        except OSError as exc:
             if exc.errno == errno.EEXIST and os.path.isdir(build_path):
                 pass
 
@@ -46,26 +52,24 @@ class PySCRIP_Build(build):
             pyscriplib = "PySCRIP/_scrip.so"
 
         # run original build code
-        build.run(self)
+        distbuild.run(self)
 
         # Copy the shared library to the lib folder
         self.copy_file(pyscriplib, os.path.join(self.build_lib, 'PySCRIP'))
         os.remove(pyscriplib)
 
 
-
-
-class PySCRIP_Install(install):
+class PySCRIP_Install(setuptoolsinstall):
     def run(self):
         # do pre install stuff:
-        
-        install.run(self)
-        
+
+        setuptoolsinstall.run(self)
+
         # do post install stuff:
         print("\nPySCRIP installed successfully\n")
 
 
-class PySCRIP_Clean(clean):
+class PySCRIP_Clean(distclean):
     def run(self):
         # Construct the make command call
         cmd = ['make', 'clean', '-C', 'PySCRIP']
@@ -75,6 +79,8 @@ class PySCRIP_Clean(clean):
 
         # Execute the make call
         self.execute(callclean, [], 'Cleaning SCRIP compilation')
+
+        distclean.run(self)
 
 
 if __name__ == "__main__":

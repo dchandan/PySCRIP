@@ -1,54 +1,55 @@
 """
-This file provides a class for easy access to mapping files that have been
-configured on this system. To do this the class relies on configuration
-data stored as a YAML file in the user's home directory.
-
+This file provides a class with an interface for easy access to mapping files
+that have been configured on a system. To do this the class relies on
+configuration data stored as a YAML file in the user's home directory.
 """
+
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os.path as osp
 import yaml
 
 
-class YAMLobj(dict):
-    """
-    Maps a YAML parsed nested dictionary to python attributes.
-    This solution is a variation on http://stackoverflow.com/a/32107024/805357
-
-    We need this class to derive the PySCRIPConfig class below.
-    """
-
-    def __init__(self, args):
-        super(YAMLobj, self).__init__(args)
-        if isinstance(args, dict):
-            for (k, v) in list(args.items()):
-                if not isinstance(v, dict):
-                    self[k] = v
-                else:
-                    self.__setattr__(k, YAMLobj(v))
-
-    def __getattr__(self, attr):
-        return self.get(attr)
-
-    def __setattr__(self, key, value):
-        self.__setitem__(key, value)
-
-    def __setitem__(self, key, value):
-        super(YAMLobj, self).__setitem__(key, value)
-        self.__dict__.update({key: value})
-
-    def __delattr__(self, item):
-        self.__delitem__(item)
-
-    def __delitem__(self, key):
-        super(YAMLobj, self).__delitem__(key)
-        del self.__dict__[key]
-
-
 class SCRIPConfigError(Exception):
     pass
 
+class Map:
+    def __init__(self, struct, type_):
+        self.type = type_
+        self.gridfrom = struct['from']
+        self.gridto = struct['to']
+        self.name = struct['name']
+        self.fname = struct['fname']
+        self.format = struct['format']
+    
 
-class PySCRIPConfig(YAMLobj):
+
+class Mapset:
+    def __init__(self, struct):
+        self.name = struct['name']
+        self.simulations = struct['simulations']  # All the simulations for this set
+
+        self.maps = []  # Will contain all the maps
+        # Add all the conservative maps
+        for item in struct['maps']['conservative']:
+            self.maps.append(Map(item, 'conservative'))
+
+        # Add all the bilinear maps
+        for item in struct['maps']['bilinear']:
+            self.maps.append(Map(item, 'bilinear'))
+
+    def __iter__(self):
+        return iter(self.maps)
+
+    def __contains__(self, s):
+        """
+        Checks if a simulation is contained in this mapset.
+        """
+        return s in self.simulations
+
+
+
+class PySCRIPConfig(object):
     defaultconfigfile = osp.join(osp.expanduser("~"), ".pyscrip.yaml")
 
     def __init__(self, configfile=None):
@@ -65,71 +66,42 @@ class PySCRIPConfig(YAMLobj):
         else:
             ff = open(configfile, 'r')
 
-        super(PySCRIPConfig, self).__init__(yaml.load(ff, Loader=yaml.Loader))
+        rawdata = yaml.load(ff, Loader=yaml.Loader)
         ff.close()
 
-    def _mapsListForCaseAndType(self, case, maptype):
-        """
-        ARGUMENTS
-            case    - name of the case
-            maptype - name of the map type (e.g. conservative)
-        RETURNS
-            list of maps (a map is information about going from grid A to grid B)
-            configured for the specific case and the specific type
-        """
-        if case in self.casesAvailable():
-            if maptype in self.mapsAvailable(case):
-                return getattr(getattr(self.map, case), maptype)
-        raise SCRIPConfigError("No map information found in PySCRIP config file")
+        self.mapsets = []   # Will contaon all the mapsets
+        for item in rawdata['mapsets']:
+            self.mapsets.append(Mapset(item))
 
-    def mapFile(self, case, maptype, gfrom, gto):
-        """
-        ARGUMENTS
-            case    - name of the case
-            maptype - name of the map type (e.g. conservative)
-            gfrom   - grid from which to map
-            gto     - the grid to which to map
-        RETURNS
-            full pathname to the mapping file
-        """
-        for mapconf in self._mapsListForCaseAndType(case, maptype):
-            if (mapconf["from"] == gfrom) and (mapconf["to"] == gto):
-                return osp.join(self.datadir[0], mapconf["fname"])
-        raise SCRIPConfigError("No map information found in PySCRIP config file")
 
-    def mapName(self, case, maptype, gfrom, gto):
-        """
-        Constructs and returns the name of the SCRIP netcdf mapping file corresponding
-        to the map type "maptype" from grid "grom" to grid "gto".
-        ARGUMENTS
-            case    - name of the case
-            maptype - name of the map type (e.g. conservative)
-            gfrom   - grid from which to map
-            gto     - the grid to which to map
-        RETURNS
-            description of the map
-        """
-        for mapconf in self._mapsListForCaseAndType(case, maptype):
-            if (mapconf["from"] == gfrom) and (mapconf["to"] == gto):
-                return mapconf["name"]
-        raise SCRIPConfigError("No map information found in PySCRIP config file")
+    def __iter__(self):
+        return iter(self.mapsets)
 
-    def mapsAvailable(self, case):
-        """
-        ARGUMENTS
-            case - name of the case
-        RETURNS
-            list of the map types configured for this case
-        """
-        val = getattr(self.map, case)
-        if val is None:
-            raise SCRIPConfigError("No information for requested 'case' in PySCRIP config file")
-        else:
-            return list(val.keys())
 
-    def casesAvailable(self):
+    def getmap(self, simulation, maptype, gfrom, gto):
         """
-        RETURNS
-            list of the cases currently available in the configuration file
+        Args:
+            simulation (str): name of the CESM simulation
+            maptype (str): name of the type of map ('conservative' or 'bilinear')
+            gfrom (str): name of the source grid
+            gto (str): name of the destination grid
+        Returns:
+            Object of class Map
         """
-        return list(self.map.keys())
+        for _set in self.mapsets:
+            if simulation in _set:
+                for _map in _set:
+                    if ((_map.gridfrom == gfrom) and (_map.gridto == gto) and 
+                       (_map.type == maptype)):
+                        return _map
+
+        raise SCRIPConfigError("No mapfile found for the specific configuration")
+
+
+
+
+
+if __name__ == "__main__":
+    a = PySCRIPConfig("untitled.yaml")
+
+    print(a.getmap('PlioMIP_Eoi450_v2', 'conservative', 'gx1', 'll1').fname)
