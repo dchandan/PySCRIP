@@ -102,6 +102,6 @@ class PySCRIPConfig(object):
 
 
 if __name__ == "__main__":
-    a = PySCRIPConfig("untitled.yaml")
+    a = PySCRIPConfig()
 
-    print(a.getmap('PlioMIP_Eoi450_v2', 'conservative', 'gx1', 'll1').fname)
+    print(a.getmap('PlioMIP_Eoi400_v2', 'conservative', 'gx1', 'll1').fname)

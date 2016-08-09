@@ -20,7 +20,7 @@ class PySCRIP_Build(distbuild):
     """
     def run(self):
         if sys.version_info >= (3, 0):
-            F2PY = "/Users/dchandan/local/anaconda/bin/f2py3"
+            F2PY = "f2py3"
         else:
             F2PY = "f2py"
 

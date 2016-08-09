@@ -14,6 +14,7 @@ LIBDIR    = $(shell $(NC_CONFIG) --prefix)/lib
 INCDIR    = $(shell $(NC_CONFIG) --prefix)/include
 SRCDIR    = $(shell pwd)
 # BUILDIR   = /Users/dchandan/Development/PySCRIP/build/test
+# BUILDIR = ./
 PREFIX    = /usr/local
 
 LIBNAME   = _scrip
