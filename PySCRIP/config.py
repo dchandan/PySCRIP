@@ -28,6 +28,7 @@ class Mapset:
     def __init__(self, struct):
         self.name = struct['name']
         self.simulations = struct['simulations']  # All the simulations for this set
+        self.oceanmask = struct['oceanmask']
 
         self.maps = []  # Will contain all the maps
         # Add all the conservative maps
@@ -97,6 +98,11 @@ class PySCRIPConfig(object):
 
         raise SCRIPConfigError("No mapfile found for the specific configuration")
 
+    def get_ocean_mask(self, simulation):
+        for _set in self.mapsets:
+            if simulation in _set:
+                return _set.oceanmask
+
 
 
 
@@ -104,4 +110,6 @@ class PySCRIPConfig(object):
 if __name__ == "__main__":
     a = PySCRIPConfig()
 
-    print(a.getmap('PlioMIP_Eoi400_v2', 'conservative', 'gx1', 'll1').fname)
+    # print(a.getmap('PlioMIP_Eoi400_v2', 'conservative', 'gx1', 'll1').fname)
+    print(a.get_ocean_mask('PlioMIP_Eoi400_B'))
+
