@@ -8,6 +8,7 @@ configuration data stored as a YAML file in the user's home directory.
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os.path as osp
 import yaml
+from netCDF4 import Dataset
 
 
 class SCRIPConfigError(Exception):
@@ -101,7 +102,12 @@ class PySCRIPConfig(object):
     def get_ocean_mask(self, simulation):
         for _set in self.mapsets:
             if simulation in _set:
-                return _set.oceanmask
+                # return _set.oceanmask
+                ncfile = Dataset(_set.oceanmask, "r")
+                mask = ncfile.variables["mask"][:, :]
+                ncfile.close()
+                return mask
+        raise ValueError("Found no mask for given simulation")
 
 
 
