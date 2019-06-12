@@ -82,6 +82,7 @@ class PySCRIPConfig(object):
 
     def getmap(self, simulation, maptype, gfrom, gto):
         """
+        Get a Map by providing the name of the stimulation and details of the map.
         Args:
             simulation (str): name of the CESM simulation
             maptype (str): name of the type of map ('conservative' or 'bilinear')
@@ -98,6 +99,27 @@ class PySCRIPConfig(object):
                         return _map
 
         raise SCRIPConfigError("No mapfile found for the specific configuration")
+
+    def getmap_by_mapset(self, mapset, maptype, gfrom, gto):
+        """
+        Get a Map by providing the name of the Mapset.
+        Args:
+            mapset (str): name of the Mapset
+            maptype (str): name of the type of map ('conservative' or 'bilinear')
+            gfrom (str): name of the source grid
+            gto (str): name of the destination grid
+        Returns:
+            Object of class Map
+        """
+        for _set in self.mapsets:
+            if mapset == _set.name:
+                for _map in _set:
+                    if ((_map.gridfrom == gfrom) and (_map.gridto == gto) and 
+                       (_map.type == maptype)):
+                        return _map
+
+        raise SCRIPConfigError("No mapfile found for the specific configuration")
+
 
     def get_ocean_mask(self, simulation):
         for _set in self.mapsets:

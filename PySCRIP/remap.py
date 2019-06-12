@@ -3,6 +3,7 @@ import numpy as np
 import netCDF4 as netCDF
 from . import _scrip
 
+__all__ = ["remap", "Remapper"]
 
 def remap(src_array, remap_file, fformat, src_grad1=None, src_grad3=None,
           src_grad2=None, spval=1e37, verbose=False):
@@ -194,6 +195,150 @@ def remap(src_array, remap_file, fformat, src_grad1=None, src_grad3=None,
     data.close()
 
     return dst_array
+
+
+class Remapper(object):
+    def __init__(self, remap_file, fformat, src_grad1=None, src_grad2=None,
+                 src_grad3=None, spval=1e37):
+        self.remap_file = remap_file
+        self.fformat = fformat
+        self.src_grad1 = src_grad1
+        self.src_grad2 = src_grad2
+        self.src_grad3 = src_grad3
+        self.spval = spval
+
+        data = netCDF.Dataset(self.remap_file, "r")
+
+        self.map_method = data.map_method
+
+        if self.fformat == "scrip":
+            self.src_grid_name = data.source_grid
+            self.dst_grid_name = data.dest_grid
+            self.src_grid_size = len(data.dimensions['src_grid_size'])
+            self.dst_grid_size = len(data.dimensions['dst_grid_size'])
+            self.num_links = len(data.dimensions['num_links'])
+            self.src_grid_dims = data.variables['src_grid_dims'][:]
+            self.dst_grid_dims = data.variables['dst_grid_dims'][:]
+
+            # get weights and addresses from remap_file
+            self.map_wts = data.variables['remap_matrix'][:]
+            self.dst_add = data.variables['dst_address'][:]
+            self.src_add = data.variables['src_address'][:]
+
+            # get destination mask
+            self.dst_mask = data.variables['dst_grid_imask'][:]
+
+        else:
+            self.src_grid_name = data.domain_a
+            self.dst_grid_name = data.domain_b
+            self.src_grid_size = len(data.dimensions['n_a'])
+            self.dst_grid_size = len(data.dimensions['n_b'])
+            self.num_links = len(data.dimensions['n_s'])
+            self.src_grid_dims = data.variables['src_grid_dims'][:]
+            self.dst_grid_dims = data.variables['dst_grid_dims'][:]
+
+            # get weights and addresses from remap_file
+            self.map_wts1 = data.variables['S'][:]
+            self.map_wts2 = data.variables['S2'][:]
+            self.dst_add = data.variables['row'][:]
+            self.src_add = data.variables['col'][:]
+            # get destination mask
+            self.dst_mask = data.variables['mask_b'][:]
+
+        # remap from src grid to dst grid
+        if self.src_grad1 is not None:
+            self.iorder = 2
+        else:
+            self.iorder = 1
+
+        data.close()
+
+        self.idx_mask = np.where(self.dst_mask == 0)
+
+        # insure that map_wts is a (num_links,4) array
+        self.tmp_map_wts = np.zeros((self.num_links, 4))
+
+        if self.iorder == 1:
+            # first order remapping
+            if self.fformat == "scrip":
+                self.tmp_map_wts[:, 0] = self.map_wts[:, 0].copy()
+            else:
+                self.tmp_map_wts[:, 0] = self.map_wts1.copy()
+                self.tmp_map_wts[:, 1:3] = self.map_wts2.copy()
+
+            self.map_wts = self.tmp_map_wts
+
+        if self.iorder == 2:
+            # second order remapping
+            if self.map_method == 'conservative':
+                self.tmp_map_wts[:, 0:2] = self.map_wts[:, 0:2].copy()
+                self.map_wts = self.tmp_map_wts
+                self.tmp_src_grad1 = self.src_grad1.flatten()
+                self.tmp_src_grad2 = self.src_grad2.flatten()
+            elif self.map_method == 'bicubic':
+                self.tmp_src_grad1 = self.src_grad1.flatten()
+                self.tmp_src_grad2 = self.src_grad2.flatten()
+                self.tmp_src_grad3 = self.src_grad3.flatten()
+            else:
+                raise ValueError('Unknown method')
+
+        self.tmp_dst_array = np.zeros(self.dst_grid_size)
+
+    def __remap2D(self, tmp_src_array, spval):
+        """
+        Internal only function that performs the full remap process (remapping,
+        masking, if and when applicable, and reshaping) on a 2D data array.
+
+        Args:
+            tmp_src_array: flattened sourcearray
+            spval: special value for masking
+        """
+
+        if self.iorder == 1:
+            # first order remapping
+            _scrip.remap(self.tmp_dst_array, self.map_wts, self.dst_add,
+                         self.src_add, tmp_src_array)
+
+        if self.iorder == 2:
+            # second order remapping
+            if self.map_method == 'conservative':
+                _scrip.remap(self.tmp_dst_array, self.map_wts,
+                             self.dst_add, self.src_add, tmp_src_array,
+                             self.tmp_src_grad1, self.tmp_src_grad2)
+            elif self.map_method == 'bicubic':
+                _scrip.remap(self.tmp_dst_array, self.map_wts,
+                             self.dst_add, self.src_add, tmp_src_array,
+                             self.tmp_src_grad1, self.tmp_src_grad2,
+                             self.tmp_src_grad3)
+
+        # Mask destination array
+        self.tmp_dst_array[self.idx_mask] = spval
+        dst_array = np.ma.masked_values(self.tmp_dst_array, spval)
+        dst_array = np.reshape(dst_array, (self.dst_grid_dims[1], self.dst_grid_dims[0]))
+        return dst_array
+
+    def __call__(self, src_array, spval=None):
+        self.tmp_dst_array[:] = 0.0
+
+        ndim = len(src_array.squeeze().shape)
+
+        if spval is None:
+            spval = self.spval
+
+        if ndim == 2:
+            tmp_src_array = src_array.flatten()
+            return self.__remap2D(tmp_src_array, spval)
+        elif ndim == 3:
+            nlev = src_array.shape[0]
+            dst_array3D = np.zeros((nlev, self.dst_grid_dims[1], self.dst_grid_dims[0]))
+
+            # loop over vertical level
+            for k in range(nlev):
+                tmp_src_array = src_array[k, :, :].flatten()
+                dst_array3D[k, :, :] = self.__remap2D(tmp_src_array, spval)
+                return dst_array3D
+        else:
+            raise ValueError('src_array must have two or three dimensions')
 
 
 

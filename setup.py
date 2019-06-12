@@ -19,11 +19,11 @@ class PySCRIP_Build(distbuild):
 
     """
     def run(self):
-        if sys.version_info >= (3, 0):
-            F2PY = "f2py3"
-        else:
-            F2PY = "f2py"
-
+        # if sys.version_info >= (3, 0):
+        #     F2PY = "f2py3"
+        # else:
+        #     F2PY = "f2py"
+        F2PY = "f2py"
         build_path = os.path.abspath(self.build_temp)
         # os.makedirs(build_path)
         try:
@@ -45,8 +45,9 @@ class PySCRIP_Build(distbuild):
         self.mkpath(self.build_lib)
 
         if sys.version_info >= (3, 0):
-            target_files = [os.path.join(build_path, '_scrip.cpython-35m-darwin.so')]
-            pyscriplib = "PySCRIP/_scrip.cpython-35m-darwin.so"
+            fname = '_scrip.cpython-{0}{1}m-darwin.so'.format(sys.version_info[0], sys.version_info[1])
+            target_files = [os.path.join(build_path, fname)]
+            pyscriplib = "PySCRIP/{0}".format(fname)
         else:
             target_files = [os.path.join(build_path, '_scrip.so')]
             pyscriplib = "PySCRIP/_scrip.so"

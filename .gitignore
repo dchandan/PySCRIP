@@ -6,3 +6,8 @@ build
 PySCRIP.egg-info
 PySCRIP/_scrip.so.dSYM
 PySCRIP/_scrip.cpython-35m-darwin.so.dSYM
+*.o
+*.mod
+bin/.ipynb_checkpoints/
+*.so
+test/.ipynb_checkpoints/
