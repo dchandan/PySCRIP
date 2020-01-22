@@ -9,8 +9,8 @@
 #===============================================================================
 
 NC_CONFIG = nc-config
-LIBDIR    = $(SCINET_NETCDF_LIB)
-INCDIR    = $(SCINET_NETCDF_INC)
+LIBDIR    = $(SCINET_NETCDF_ROOT)/lib
+INCDIR    = $(SCINET_NETCDF_ROOT)/include
 SRCDIR    = $(shell pwd)
 BUILDIR = ./
 PREFIX    = /usr/local
@@ -20,8 +20,8 @@ COMPILE   = gfortran
 FLAGS     = -fdefault-real-8 -ffixed-form -O2 -fPIC
 LIB       =  $(shell $(NC_CONFIG) --flibs)
 INCLUDE   = -I$(INCDIR)
-F2PY      = f2py3
-HDF = -L$(SCINET_HDF5_LIB) -L$(SCINET_ZLIB_LIB)
+F2PY      = f2py
+HDF = -L$(SCINET_HDF5_ROOT)/lib
 F2PY_LIB  = -L$(LIBDIR) $(HDF) -lnetcdf -lnetcdff -lhdf5 -lhdf5_hl
 F2PY_INCLUDE  = -I$(INCDIR) -I$(BUILDIR)
 F2PY_F90_FLAG = '-fdefault-real-8 -ffixed-form -O2 -fPIC'

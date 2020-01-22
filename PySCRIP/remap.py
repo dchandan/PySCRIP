@@ -342,38 +342,38 @@ class Remapper(object):
 
 
 
-def __special__get_remap_data_to_ll1_grid(fname):
-    """
-    Special function to return quantities from a file that would be necessary
-    to call _scrip.remap externally (i.e. not using the remap function above).
+# def __special__get_remap_data_to_ll1_grid(fname):
+#     """
+#     Special function to return quantities from a file that would be necessary
+#     to call _scrip.remap externally (i.e. not using the remap function above).
 
-    CAVEATS:
-    This is only for a special case of mapping to an ll1 grid (lat-lon 1 degree)
-    which is stored in the scrip formart.
+#     CAVEATS:
+#     This is only for a special case of mapping to an ll1 grid (lat-lon 1 degree)
+#     which is stored in the scrip formart.
 
-    :param fname: the full path and the name to the remapping
-                  file that must be used to map data from the source grid
-                  to the destination grid.
-    :return:
-    5 numpy arrays
-    """
-    ncfile = netCDF.Dataset(fname, "r")
+#     :param fname: the full path and the name to the remapping
+#                   file that must be used to map data from the source grid
+#                   to the destination grid.
+#     :return:
+#     5 numpy arrays
+#     """
+#     ncfile = netCDF.Dataset(fname, "r")
 
-    dst_grid_size = len(ncfile.dimensions['dst_grid_size'])
-    num_links = len(ncfile.dimensions['num_links'])
+#     dst_grid_size = len(ncfile.dimensions['dst_grid_size'])
+#     num_links = len(ncfile.dimensions['num_links'])
 
-    # get weights and addresses from remap_file
-    map_wts = ncfile.variables['remap_matrix'][:]
-    dst_add = ncfile.variables['dst_address'][:]
-    src_add = ncfile.variables['src_address'][:]
+#     # get weights and addresses from remap_file
+#     map_wts = ncfile.variables['remap_matrix'][:]
+#     dst_add = ncfile.variables['dst_address'][:]
+#     src_add = ncfile.variables['src_address'][:]
 
-    # get destination mask
-    dst_mask = ncfile.variables['dst_grid_imask'][:]
+#     # get destination mask
+#     dst_mask = ncfile.variables['dst_grid_imask'][:]
 
-    tmp_map_wts = np.zeros((num_links, 4))
-    tmp_map_wts[:, 0] = map_wts[:, 0].copy()
-    map_wts = tmp_map_wts
+#     tmp_map_wts = np.zeros((num_links, 4))
+#     tmp_map_wts[:, 0] = map_wts[:, 0].copy()
+#     map_wts = tmp_map_wts
 
-    ncfile.close()
-    return map_wts, src_add, dst_grid_size, dst_add, dst_mask
+#     ncfile.close()
+#     return map_wts, src_add, dst_grid_size, dst_add, dst_mask
 
